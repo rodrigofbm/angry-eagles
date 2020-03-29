@@ -19,9 +19,18 @@ public class PlayerController : MonoBehaviour {
 
     [SerializeField]
     LineRenderer lineBack, lineFront;
+    [SerializeField]
+    SpringJoint2D spring;
+    [SerializeField]
+    Vector2 prevVel;
+    Rigidbody2D playerRb;
 
     void Start() {
         playerCircleCollider = GetComponent<CircleCollider2D>();
+
+        spring = GetComponent<SpringJoint2D>();
+        playerRb = GetComponent<Rigidbody2D>();
+
         fromFrontCatapult = new Ray(lineFront.transform.position, Vector3.zero);
         LineSetup();
     }
@@ -29,6 +38,8 @@ public class PlayerController : MonoBehaviour {
     // Update is called once per frame
     void Update() {
         LineUpdate();
+        SpringEffect();
+        prevVel = playerRb.velocity;
 
         PlayerMovement();
     }
@@ -53,6 +64,7 @@ public class PlayerController : MonoBehaviour {
             }
 
             if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) {
+                playerRb.isKinematic = false;
                 clicked = false;
             }
 
@@ -73,4 +85,20 @@ public class PlayerController : MonoBehaviour {
         lineFront.SetPosition(1, playerWidth);
         lineBack.SetPosition(1, playerWidth);
     }
+
+    void SpringEffect() {
+        if(spring != null) {
+            if (!playerRb.isKinematic) {
+                if (prevVel.sqrMagnitude > playerRb.velocity.sqrMagnitude) {
+                    lineFront.enabled = false;
+                    lineBack.enabled = false;
+
+                    Destroy(spring);
+                    playerRb.velocity = prevVel;
+                }
+            }
+            
+        }
+    }
+
 }
