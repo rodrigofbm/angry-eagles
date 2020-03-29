@@ -21,9 +21,11 @@ public class PlayerController : MonoBehaviour {
     LineRenderer lineBack, lineFront;
     [SerializeField]
     SpringJoint2D spring;
-    [SerializeField]
     Vector2 prevVel;
     Rigidbody2D playerRb;
+
+    [SerializeField]
+    GameObject playerDeathFx;
 
     void Start() {
         playerCircleCollider = GetComponent<CircleCollider2D>();
@@ -41,10 +43,29 @@ public class PlayerController : MonoBehaviour {
         SpringEffect();
         prevVel = playerRb.velocity;
 
-        PlayerMovement();
+        #if UNITY_ANDROID
+        PlayerMovementAndroid();
+        #endif
+
+        #if UNITY_EDITOR
+         PlayerMovementEditor();
+        #endif
+
+
+        if (!clicked && !playerRb.isKinematic)
+            DestroyPlayer();
     }
 
-    void PlayerMovement() {
+    void PlayerMovementEditor() {
+        if (clicked) {
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = transform.position.z;
+
+            transform.position = mousePos;
+        }
+    }
+
+    void PlayerMovementAndroid() {
         if (Input.touchCount > 0) {
             touch = Input.GetTouch(0);
             screenWp = Camera.main.ScreenToWorldPoint(touch.position);
@@ -99,6 +120,27 @@ public class PlayerController : MonoBehaviour {
             }
             
         }
+    }
+
+    void DestroyPlayer() {
+        if(playerRb.velocity.magnitude <= 0.0f && !playerRb.IsSleeping()) {
+            StartCoroutine(PlayerDeath(2.0f));
+        }
+    }
+
+    IEnumerator PlayerDeath(float seconds) {
+        yield return new WaitForSeconds(seconds);
+        Instantiate(playerDeathFx, new Vector2(transform.position.x, transform.position.y), Quaternion.identity);
+        Destroy(gameObject);
+    }
+
+    void OnMouseDown() {
+        clicked = true;
+    }
+
+    void OnMouseUp() {
+        playerRb.isKinematic = false;
+        clicked = false;
     }
 
 }
