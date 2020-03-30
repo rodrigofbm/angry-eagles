@@ -14,7 +14,7 @@ public class CameraFollowing : MonoBehaviour {
 
     void StartFollowing() {
         stageDimensions = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
-        maxX = stageDimensions.x - (stageDimensions.x / 2.2f);
+        maxX = stageDimensions.x - (stageDimensions.x / 1.3f);
         posCam = transform.position;
 
         posCam.x = player.position.x;

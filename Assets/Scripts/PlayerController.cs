@@ -27,6 +27,12 @@ public class PlayerController : MonoBehaviour {
     [SerializeField]
     GameObject playerDeathFx;
 
+    //spring limits
+    Transform backCatapult;
+    Ray rayToTouchPos;
+    [SerializeField]
+    float dragLimit = 3.0f;
+
     void Start() {
         playerCircleCollider = GetComponent<CircleCollider2D>();
 
@@ -34,6 +40,8 @@ public class PlayerController : MonoBehaviour {
         playerRb = GetComponent<Rigidbody2D>();
 
         fromFrontCatapult = new Ray(lineFront.transform.position, Vector3.zero);
+        backCatapult = spring.connectedBody.transform;
+        rayToTouchPos = new Ray(backCatapult.position, Vector3.zero);
         LineSetup();
     }
 
@@ -59,9 +67,7 @@ public class PlayerController : MonoBehaviour {
     void PlayerMovementEditor() {
         if (clicked) {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mousePos.z = transform.position.z;
-
-            transform.position = mousePos;
+            LimitPlayerMovement(mousePos);
         }
     }
 
@@ -79,8 +85,7 @@ public class PlayerController : MonoBehaviour {
                 if (touch.phase == TouchPhase.Stationary || touch.phase == TouchPhase.Moved) {
                     playerNewPos = Camera.main.ScreenToWorldPoint(new Vector3(touch.position.x, touch.position.y, 10));
 
-                    transform.position = playerNewPos;
-
+                    LimitPlayerMovement(playerNewPos);
                 }
             }
 
@@ -90,6 +95,20 @@ public class PlayerController : MonoBehaviour {
             }
 
         }
+    }
+
+    void LimitPlayerMovement(Vector3 inputPos) {
+        catpultToPlayer = inputPos - backCatapult.position;
+
+
+        inputPos.z = transform.position.z;
+
+        if (catpultToPlayer.magnitude > dragLimit) {
+            rayToTouchPos.direction = catpultToPlayer;
+            inputPos = rayToTouchPos.GetPoint(dragLimit);
+        }
+
+        transform.position = inputPos;
     }
 
     void LineSetup() {
